@@ -104,24 +104,21 @@ class HashTable:
         Implement this.
         """
         # print()
-        # print('adding hash: ', 'key:', key, 'hash:',self.fnv1(key), 'value:',value, 'length:',self.length, 'capacity:',self.capacity)
+        print('adding hash: ', 'key:', key, 'hash:',self.fnv1(key), 'value:',value, 'length:',self.length, 'capacity:',self.capacity)
         entry = HashTableEntry(key, value)
 
         if self.length == self.capacity:
-            self.capacity += self.capacity*2
-            # print('capacity reached')
+            self.capacity += 1
+            print('capacity reached')
             self.resize(self.capacity)
             self.tail.next = entry
             self.tail = entry
             # entry.next = self.head #
             # self.head = entry
             # self.list[self.stupid_hash(key)] = value
-
-            # NEXT - TEST BELOW FNV FUNCTION
-
             self.list[self.fnv1(key)] = value
             # self.length += 1
-            # print(self.list, self.length, self.capacity, self.head.value, self.tail.value, self.tail.next is None)
+            print(self.list, self.length, self.capacity, self.head.value, self.tail.value, self.tail.next is None)
         
 
         elif self.length == 0:
@@ -137,7 +134,7 @@ class HashTable:
             self.list[self.fnv1(key)] = value
             self.length += 1
             # print('2')
-        # print('added hash:  ', 'key:', key, 'hash:',self.fnv1(key), 'value:',value, 'length:',self.length, 'capacity:',self.capacity)
+        print('added hash:  ', 'key:', key, 'hash:',self.fnv1(key), 'value:',value, 'length:',self.length, 'capacity:',self.capacity)
             
 
 
@@ -150,16 +147,7 @@ class HashTable:
 
         Implement this.
         """
-        try:
-            val = self.list[self.fnv1(key)]
-            self.list[self.fnv1(key)] = None
-            print(f"Removed '{key}': {val} from list)")
-            # value = self.list[self.fnv1(key)]
-            # print('WTF')
-        except ValueError:
-            # print('GTH')
-            print("Value not found for given key")
-        # return value
+        # Your code here
 
 
     def get(self, key):
@@ -170,19 +158,7 @@ class HashTable:
 
         Implement this.
         """
-        # print('key ',key)
-        # print('hash ',self.fnv1(key))
-        # print('list', self.list)
-        # print('value given 12',self.list[12])
-        # print('value given hash',self.list[self.fnv1(key)])
-        # print(self.list.index(self.fnv1(key)))
-        try:
-            value = self.list[self.fnv1(key)]
-            # print('WTF')
-        except ValueError:
-            # print('GTH')
-            value = None
-        return value
+        # Your code here
 
 
     def resize(self, new_capacity):
@@ -193,12 +169,12 @@ class HashTable:
         Implement this.
         """
         
-        new_hash_table = HashTable(self.capacity+1)
         # print('pre')
         # print(self.list, self.length, self.capacity, self.head.value, self.tail.value, self.tail.next is None)
-        self.capacity = new_capacity
-        self.list = [None] * self.capacity
+        # self.capacity = new_capacity
+        new_hash_table = HashTable(self.capacity+1)
         # new_hash_table.list = [None] * self.capacity
+        # self.list = [None] * self.capacity
         # self.length = 0
         # print('mid')
         # print(self.list, self.capacity, self.length, self.head.value, self.tail.value, self.tail.next is None)
@@ -207,23 +183,22 @@ class HashTable:
         current_entry = self.head
         # breakpoint()
         while current_entry:
-            new_hash = self.fnv1(current_entry.key)
+            # new_hash = self.fnv1(current_entry.key)
             # new_hash = new_hash_table.fnv1(current_entry.key)
             # print(new_hash, current_entry.value,current_entry.next.value if current_entry.next is not None else '', current_entry.key)
             # self.list[self.fnv1(current_entry.key)] = current_entry.value
-            self.list[new_hash] = current_entry.value
+            # self.list[new_hash] = current_entry.value
             # new_hash_table.list[self.fnv1(current_entry.key)] = current_entry.value
             # self.list[new_hash] = current_entrly.value
+            new_hash_table.put(current_entry.key, current_entry.value)
             current_entry = current_entry.next
             # self.length += 1
 
-            # new_hash_table.put(current_entry.key, current_entry.value)
-
-        # self.head = new_hash_table.head
-        # self.tail = new_hash_table.tail
-        # self.length=  new_hash_table.length
-        # self.capacity = new_hash_table.capacity
-        # self.list = new_hash_table.list
+        self.head = new_hash_table.head
+        self.tail = new_hash_table.tail
+        self.length=  new_hash_table.length
+        self.capacity = new_hash_table.capacity
+        self.list = new_hash_table.list
 
 
 
@@ -250,12 +225,6 @@ if __name__ == "__main__":
     "line_ ", ht.put("line_10", "J")
     "line_ ", ht.put("line_11", "K")
     "line_ ", ht.put("line_12", "L")
-    print(ht.list)
-    print()
-    print(ht.get("line_4"))
-    print(ht.get("line_5"))
-    print(ht.delete('line_2'))
-    print(ht.list)
     # print("line_1 ", ht.fnv1("A"))
     # print("line_2 ", ht.fnv1("B"))
     # print("line_3 ", ht.fnv1("C"))
