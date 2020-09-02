@@ -1,3 +1,4 @@
+
 class HashTableEntry:
     """
     Linked List hash table key/value pair
@@ -25,8 +26,6 @@ class HashTable:
         self.capacity = max(MIN_CAPACITY, capacity)
         self.length = 0
         self.list = [None]*self.capacity
-        self.head = None
-        self.tail = None
         
         
     def get_num_slots(self):
@@ -48,7 +47,7 @@ class HashTable:
 
         Implement this.
         """
-        # Your code here
+        return (self.length/self.capacity)
 
     def stupid_hash(self, key, capacity):
         b = key.encode()  # Get the bytes of the string
@@ -64,9 +63,6 @@ class HashTable:
 
         Implement this, and/or DJB2.
         """
-    
-        # Your code here
-        # offset basis and FNVPriem are specially designated constants. 
         fnv_prime = 1099511628211
         fnv_offset_basis = 14695981039346656037
 
@@ -92,8 +88,7 @@ class HashTable:
         Take an arbitrary key and return a valid integer index
         between within the storage capacity of the hash table.
         """
-        #return self.fnv1(key) % self.capacity
-        return self.djb2(key) % self.capacity
+        return self.fnv1(key) % self.capacity
 
     def put(self, key, value):
         """
@@ -103,42 +98,45 @@ class HashTable:
 
         Implement this.
         """
-        # print()
-        # print('adding hash: ', 'key:', key, 'hash:',self.fnv1(key), 'value:',value, 'length:',self.length, 'capacity:',self.capacity)
-        entry = HashTableEntry(key, value)
+        # if self.length == 0: # THIS MIGHT NOT BE NEEDED!
 
-        if self.length == self.capacity:
-            self.capacity += self.capacity*2
-            # print('capacity reached')
-            self.resize(self.capacity)
-            self.tail.next = entry
-            self.tail = entry
-            # entry.next = self.head #
-            # self.head = entry
-            # self.list[self.stupid_hash(key)] = value
+        # if key == 'line_7':
+        #     breakpoint()
+        hash_value = self.fnv1(key)
+        print('key, value, hash value, length, capacity',key, value, hash_value, self.length, self.capacity)
+        current_entry = self.list[hash_value]
+        # IF COMMON HASH VALUE
+        if current_entry is not None:
+            # add to linked list / tail is head (more efficient)
+            # LOOP THROUGH LINKED LIST IN CURRENT ENTRY
+            while current_entry:
+                print('okkayyy....')
+                if current_entry.key == key: # COMMON HASH VALUE AND SAME KEY
+                    current_entry.value = value #UPDATE VALUE EXISTING KEY
+                elif current_entry.next:
+                    current_entry = current_entry.next
+                else: #NEW NODE IN ELEMENT
+                    print('then...')
+                    if self.get_load_factor() > .7:
+                        print('capacity, rehashing')
+                        self.resize(2*self.capacity)
+                    hash_value = self.fnv1(key) #**** RISKY
+                    ll = HashTableEntry(key,value)
+                    # breakpoint()
+                    ll.next = self.list[hash_value]
+                    self.list[hash_value] = ll # TODO test
+                    self.length += 1
+                break
 
-            # NEXT - TEST BELOW FNV FUNCTION
-
-            self.list[self.fnv1(key)] = value
-            # self.length += 1
-            # print(self.list, self.length, self.capacity, self.head.value, self.tail.value, self.tail.next is None)
-        
-
-        elif self.length == 0:
-            self.list[self.fnv1(key)] = value
-            self.length += 1
-            self.head = entry
-            self.tail = entry
-            # print('1')
-
+        # NO COMMON HASH VALUE        
         else:
-            self.tail.next = entry
-            self.tail = entry
-            self.list[self.fnv1(key)] = value
+            if self.get_load_factor() > .7:
+                self.resize(2*self.capacity)    
+            hash_value = self.fnv1(key) #***RISKY
+            ll = HashTableEntry(key, value)
+            self.list[hash_value] = ll # this will be the head
             self.length += 1
-            # print('2')
-        # print('added hash:  ', 'key:', key, 'hash:',self.fnv1(key), 'value:',value, 'length:',self.length, 'capacity:',self.capacity)
-            
+    
 
 
 
@@ -151,15 +149,71 @@ class HashTable:
         Implement this.
         """
         try:
-            val = self.list[self.fnv1(key)]
-            self.list[self.fnv1(key)] = None
-            print(f"Removed '{key}': {val} from list)")
-            # value = self.list[self.fnv1(key)]
-            # print('WTF')
+            hash_val = self.fnv1(key)
+            entry = self.list[hash_val]
+            val = entry.value
+            # print(key == entry.key)
+            while entry:
+                # if key == 'line_12':
+                #     breakpoint()
+                # MATCH IS ON THE NEXT KEY AND TWO MORE NODES TILL LEAF (e.g. root --> match --> leaf)
+                if entry.next is not None and entry.next.next is not None and entry.next.key == key:
+                    # print('*1')
+                    entry.next = entry.next.next
+                    self.length -= 1
+                    entry = entry.next
+
+                # MATCH ON THE ROOT NODE AND THERE IS AT LEAST ONE MORE NODE (e.g. match --> next -->.....)
+                elif self.list[hash_val].key == key and entry.next is not None: #and entry.next.next 
+                    # print('*1-root node')
+                    new_head = entry.next #***
+                    self.list[hash_val] = new_head #entry.next
+                    self.length -= 1
+                    entry = None #Nasty code!!
+                    # breakpoint()
+
+                # next node is the last node and matches key    
+                elif entry.next is not None and entry.next.key == key and entry.next.next is None: #third condition is redundant but just in case
+                    # print('*2')
+                    # breakpoint()
+                    entry.next = None
+                    self.length -= 1
+                    entry = entry.next
+                
+                # next node is the last node and the current node key matches key -> NEED TO TEST
+                elif entry.next is not None and entry.key == key:
+                    # print('*3')
+                    # breakpoint()
+                    entry = entry.next
+                    self.length -= 1
+
+                    entry = entry.next
+
+                else: # only one node exists
+                    # print('*4')
+                    self.list[hash_val] = None
+                    self.length -= 1
+                    entry = None
+
+
+            
+                # elif entry.key == key and entry.next:
+                #     self.list[hash_val] = entry.next
+                #     entry = entry.next
+                # elif entry.key == key:
+                #     self.list[hash_val] = None
+                    
+
+            print(f"removed {key}: {val}")
+            # breakpoint()
+
+            # if self.get_load_factor() < .2:
+            #     self.resize(self.capacity/2)
+            # print(self.size, self.capacity, self.list)
+
         except ValueError:
-            # print('GTH')
-            print("Value not found for given key")
-        # return value
+            print('No match found')
+        
 
 
     def get(self, key):
@@ -170,17 +224,18 @@ class HashTable:
 
         Implement this.
         """
-        # print('key ',key)
-        # print('hash ',self.fnv1(key))
-        # print('list', self.list)
-        # print('value given 12',self.list[12])
-        # print('value given hash',self.list[self.fnv1(key)])
-        # print(self.list.index(self.fnv1(key)))
+        value = None
+        # breakpoint()
         try:
-            value = self.list[self.fnv1(key)]
-            # print('WTF')
+            
+            entry = self.list[self.fnv1(key)]
+            while entry:
+                if entry.key == key:
+                    value = entry.value
+                    entry = entry.next
+                else:
+                    entry = entry.next
         except ValueError:
-            # print('GTH')
             value = None
         return value
 
@@ -192,49 +247,27 @@ class HashTable:
 
         Implement this.
         """
-        
-        new_hash_table = HashTable(self.capacity+1)
-        # print('pre')
-        # print(self.list, self.length, self.capacity, self.head.value, self.tail.value, self.tail.next is None)
-        self.capacity = new_capacity
-        self.list = [None] * self.capacity
-        # new_hash_table.list = [None] * self.capacity
-        # self.length = 0
-        # print('mid')
-        # print(self.list, self.capacity, self.length, self.head.value, self.tail.value, self.tail.next is None)
-        
 
-        current_entry = self.head
-        # breakpoint()
-        while current_entry:
-            new_hash = self.fnv1(current_entry.key)
-            # new_hash = new_hash_table.fnv1(current_entry.key)
-            # print(new_hash, current_entry.value,current_entry.next.value if current_entry.next is not None else '', current_entry.key)
-            # self.list[self.fnv1(current_entry.key)] = current_entry.value
-            self.list[new_hash] = current_entry.value
-            # new_hash_table.list[self.fnv1(current_entry.key)] = current_entry.value
-            # self.list[new_hash] = current_entrly.value
-            current_entry = current_entry.next
-            # self.length += 1
-
-            # new_hash_table.put(current_entry.key, current_entry.value)
-
-        # self.head = new_hash_table.head
-        # self.tail = new_hash_table.tail
-        # self.length=  new_hash_table.length
-        # self.capacity = new_hash_table.capacity
-        # self.list = new_hash_table.list
-
-
-
-        # print('post')
-        # print(self.list, self.length, self.capacity, self.head.value, self.tail.value, self.tail.next is None, self.fnv1("line_10"),self.fnv1('line_9'))
-        
-        
-            
-            
+        #self: list, capacity, length
+        old_list = self.list
+        new_list = [None]*new_capacity
+        self.list = new_list # test
+        self.length = 0 #reset length
+        self.capacity = new_capacity # test
+        for i in range(len(old_list)): # loop through old list
+            current_entry = old_list[i]
+            if current_entry:
+                while current_entry:
+                    self.put(current_entry.key, current_entry.value)
+                    current_entry = current_entry.next
+                
+        # print('new list post', self.list, 'k', k, 'j',j)
         
 
+        # breakpoint() # to test new_hash
+
+
+        
 if __name__ == "__main__":
     ht = HashTable(8)
 
@@ -245,17 +278,70 @@ if __name__ == "__main__":
     "line_ ", ht.put("line_5", "E"),
     "line_ ", ht.put("line_6", "F")
     "line_ ", ht.put("line_7", "G")
+
+    # for i,val in enumerate(ht.list):
+    #     if val:
+    #         while val: 
+    #             print(i, val.key, val.value, ht.fnv1(val.key))
+    #             val = val.next
+    
     "line_ ", ht.put("line_8", "H")
     "line_ ", ht.put("line_9", "I")
     "line_ ", ht.put("line_10", "J")
     "line_ ", ht.put("line_11", "K")
     "line_ ", ht.put("line_12", "L")
-    print(ht.list)
-    print()
-    print(ht.get("line_4"))
-    print(ht.get("line_5"))
-    print(ht.delete('line_2'))
-    print(ht.list)
+    # print(ht.list)
+    # print(ht.list, ht.length, ht.capacity)
+    # print()
+    # print(ht.get("line_4"))
+    # print(ht.get("line_5"))
+    # print(ht.get("line_14"))
+    # TODO build your own helper display functions
+    for i,val in enumerate(ht.list):
+        if val:
+            while val: 
+                print(i, val.key, val.value, ht.fnv1(val.key))
+                val = val.next
+    
+    # print('length', ht.length, 'capacity', ht.capacity)
+    # print(len(ht.list))
+
+    print(ht.delete('line_8')) #line_8 - 'H'
+
+    for i,val in enumerate(ht.list):
+        if val:
+            while val: 
+                print(i, val.key, val.value, ht.fnv1(val.key))
+                val = val.next
+    print(ht.delete('line_3')) #line_3 - 'C'
+
+    for i,val in enumerate(ht.list):
+        if val:
+            while val: 
+                print(i, val.key, val.value, ht.fnv1(val.key))
+                val = val.next
+    print(ht.delete('line_10')) #line_10 - 'J'
+
+    for i,val in enumerate(ht.list):
+        if val:
+            while val: 
+                print(i, val.key, val.value, ht.fnv1(val.key))
+                val = val.next
+    print(ht.delete('line_12')) #line_12 - 'L'
+
+    for i,val in enumerate(ht.list):
+        if val:
+            while val: 
+                print(i, val.key, val.value, ht.fnv1(val.key))
+                val = val.next
+    breakpoint()
+
+    # print(ht.get('line_9'))
+    # print(ht.get('line_12'))
+    print(ht.get('line_7'))
+    # print(ht.list)
+    # breakpoint()
+
     # print("line_1 ", ht.fnv1("A"))
     # print("line_2 ", ht.fnv1("B"))
     # print("line_3 ", ht.fnv1("C"))
