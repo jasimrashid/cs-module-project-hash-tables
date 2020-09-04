@@ -98,43 +98,34 @@ class HashTable:
 
         Implement this.
         """
-        # if self.length == 0: # THIS MIGHT NOT BE NEEDED!
-
-        # if key == 'line_7':
-        #     breakpoint()
         hash_value = self.fnv1(key)
         print('key, value, hash value, length, capacity',key, value, hash_value, self.length, self.capacity)
         current_entry = self.list[hash_value]
+
         # IF COMMON HASH VALUE
         if current_entry is not None:
-            # add to linked list / tail is head (more efficient)
-            # LOOP THROUGH LINKED LIST IN CURRENT ENTRY
             while current_entry:
-                print('okkayyy....')
-                if current_entry.key == key: # COMMON HASH VALUE AND SAME KEY
-                    current_entry.value = value #UPDATE VALUE EXISTING KEY
+                if current_entry.key == key: 
+                    current_entry.value = value 
                 elif current_entry.next:
                     current_entry = current_entry.next
-                else: #NEW NODE IN ELEMENT
-                    print('then...')
+                else:
                     if self.get_load_factor() > .7:
                         print('capacity, rehashing')
                         self.resize(2*self.capacity)
-                    hash_value = self.fnv1(key) #**** RISKY
+                    hash_value = self.fnv1(key) 
                     ll = HashTableEntry(key,value)
-                    # breakpoint()
                     ll.next = self.list[hash_value]
                     self.list[hash_value] = ll # TODO test
                     self.length += 1
                 break
 
-        # NO COMMON HASH VALUE        
         else:
             if self.get_load_factor() > .7:
                 self.resize(2*self.capacity)    
-            hash_value = self.fnv1(key) #***RISKY
+            hash_value = self.fnv1(key)
             ll = HashTableEntry(key, value)
-            self.list[hash_value] = ll # this will be the head
+            self.list[hash_value] = ll 
             self.length += 1
     
 
